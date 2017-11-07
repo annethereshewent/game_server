@@ -27,6 +27,7 @@ io.on('connection', (socket) => {
             status: 5,
             direction: 'up',
             health: 3,
+            max_health: 3,
             socket_id: socket.id
             
         }
@@ -103,12 +104,22 @@ function detect_sword_collision(player) {
             var other_position = players[prop].position;
             if (is_collision(sword_position, other_position, 6)) {
                 players[prop].health -= 0.5;
-                players[prop].position = get_position(players[prop].position, players[player].direction, false, true);
 
-                io.emit('collision', {
-                    username: prop,
-                    player: players[prop]
-                });
+                if (players[prop].health <= 0.0) {
+                    io.emit('player_death', prop);
+                    delete players[prop];
+                }
+                else {
+                    players[prop].position = get_position(players[prop].position, players[player].direction, false, true);
+
+                    io.emit('collision', {
+                        username: prop,
+                        player: players[prop]
+                    });    
+                }
+
+
+                
             }
         }
     }
