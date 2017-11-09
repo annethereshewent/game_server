@@ -228,10 +228,7 @@ function insertPlayer(db, player, callback) {
 }
 
 function connect_db(callback) {
-    console.log(process.env.NODE_ENV);
     var uri = process.env.NODE_ENV == 'production' ? process.env.MONGODB_URI : process.env.NODE_DATABASE_URL;
-
-    console.log(uri);
 
     MongoClient.connect(uri, function(err, db) {
         if (!err) {
