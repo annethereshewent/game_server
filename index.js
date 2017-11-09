@@ -87,6 +87,7 @@ io.on('connection', (socket) => {
     socket.on('stop-sword', (player) => {
         if (using_sword[player]) {
            delete using_sword[player];
+           delete players[player].use_sword
         }
     })
 
