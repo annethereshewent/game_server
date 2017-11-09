@@ -76,14 +76,20 @@ io.on('connection', (socket) => {
     socket.on('use-sword', (player) => {
         //detect a collision, see if you hit anybody, if so, emit a collision to that person
         if (players[player]) {
+            players[player].use_sword = true;
             detect_sword_collision(player);
             socket.broadcast.emit('use-sword', player)
         }
     })
 
-    socket.on('move-link', (data) => {
-        
-        if (!data.use_sword) {
+    socket.on('stop-sword', (player) => {
+        if (players[player]) {
+            delete players[player].use_sword
+        }
+    })
+
+    socket.on('move-link', (data) => {     
+        if (!data.use_sword || !players[data.player].use_sword) {
             if (players[data.player]) {
                 if (data.charging_sword != undefined) {
                     players[data.player].charging_sword = data.charging_sword;
