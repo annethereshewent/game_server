@@ -85,6 +85,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('stop-sword', (player) => {
+        console.log('received stop-sword event');
         if (using_sword[player]) {
            delete using_sword[player];
            delete players[player].use_sword
@@ -204,9 +205,15 @@ function savePlayerInfo(player, callback) {
 function updatePlayer(db, player, callback) {
     db.collection('players').update({
         player: player
-    }, { 
-        $set: players[player]
-    }, (err, results) => {
+    }, 
+    { 
+        $set: players[player],
+        $unset: {
+            use_sword: '',
+            collision: ''
+        }   
+    }, 
+    (err, results) => {
         if (err) {
             console.log(err);
 
