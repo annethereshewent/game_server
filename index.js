@@ -43,7 +43,8 @@ io.on('connection', (socket) => {
 
                 players[user] = player;
             }
-            
+            console.log('emitting players to the user: '.bold.magenta);
+            console.log(players);
             //emit the player status to all the clients so that they add it to their array
             io.emit('add-player', players);
         })
@@ -55,10 +56,13 @@ io.on('connection', (socket) => {
         for (var prop in players) {
             if (players.hasOwnProperty(prop)) {
                 if (players[prop].socket_id == socket.id) {
-                    
-                    savePlayerInfo(prop, () => { 
-                        delete players[prop];
-                        io.emit('disconnect', prop);
+                    console.log(prop + " has disconnected. deleting " + prop + " from players");
+                    var disconnected_user = prop;
+                    savePlayerInfo(disconnected_user, () => { 
+                        delete players[disconnected_user];
+                        console.log("players after removing disconnected user: ".bold.red);
+                        console.log(players);
+                        io.emit('disconnect', disconnected_user);
                     });
                 }
             }
@@ -78,10 +82,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('move-link', (data) => {
-
-        console.log('received move-link event, data = ');
-        console.log(data);
-
         if (data.charging_sword != undefined) {
             players[data.player].charging_sword = data.charging_sword;
         }
@@ -181,17 +181,14 @@ function savePlayerInfo(player, callback) {
                 'player': player
             })
             .toArray((err, players) => {
-                console.log(players);
                 if (players.length) {
                     //do an update
-                    console.log("updating player....");
                     updatePlayer(db, player, (results) => { 
                         //console.log(results);
                         callback();
                     });
                 }
                 else {
-                    console.log("inserting player....");
                     insertPlayer(db, player, (results) => {
                         //console.log(results);
                         callback();
@@ -234,7 +231,6 @@ function insertPlayer(db, player, callback) {
 function connect_db(callback) {
     MongoClient.connect(process.env.NODE_DATABASE_URL, function(err, db) {
         if (!err) {
-            console.log('connected to database successfully')
             callback(db);
         } 
         else  {
