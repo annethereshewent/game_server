@@ -65,12 +65,8 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('charge-sword', (player) => {
-        socket.broadcast.emit('charge-sword', player);
-    });
-
-    socket.on('player-message', (message) => {
-
+    socket.on('stop-charging', (player) => {
+        socket.broadcast.emit('stop-charging', player)
     });
 
     socket.on('use-sword', (player) => {
