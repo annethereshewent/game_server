@@ -97,7 +97,7 @@ io.on('connection', (socket) => {
                 if (data.charging_sword != undefined) {
                     players[data.player].charging_sword = data.charging_sword;
                 }
-                if (data.direction == players[data.player].direction) {
+                if (data.direction == players[data.player].direction || players[data.player].charging_sword || ['north', 'south'].includes(data.direction.substring(0,5))) {
                     players[data.player].status++;
                     players[data.player].status = players[data.player].status % 6;
 
@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
                 else {
                     delete players[data.player].collision
                     //change the character orientation only
-                    console.log('changing orientation only');
+                    console.log('changing direction only');
                     players[data.player].status = 3;
                     players[data.player].direction = data.direction;
                 }
@@ -131,11 +131,6 @@ function detect_sword_collision(player) {
 
     var sword_position = get_position(your_position, players[player].direction);
 
-    console.log(sword_position);
-    console.log('the above and below better be '.bold + "different".rainbow.bold)
-    console.log(players[player].position);
-
-
     for (var prop in players) {
         if (players.hasOwnProperty(prop) && prop != player) {
             var other_position = players[prop].position;
@@ -143,10 +138,6 @@ function detect_sword_collision(player) {
                 players[prop].health -= 0.5;
 
                 if (players[prop].health <= 0.0) {
-                    
-                    console.log('prop = ' + prop + ", should be a-cool-girl");
-                    
-
                     reset_player_stats(prop);
 
                     var username = prop;
@@ -271,9 +262,6 @@ function detect_player_collision(player, direction) {
     your_position = get_position(players[player].position, direction);
 
 
-    console.log((players[player].position.x + ', ' + players[player].position.y).red);
-    console.log((your_position.x + ', ' + your_position.y).green);
-
     for (var prop in players) {
 
         if (players.hasOwnProperty(prop) && prop != player) {
@@ -327,8 +315,6 @@ function detect_player_collision(player, direction) {
             }
         }
     }
-
-    console.log('returning new position');
     if (!collision) {
         delete players[player].collision;
         players[player].position = your_position;
@@ -384,7 +370,6 @@ function get_position(position, direction, detect_collision = false, is_opponent
             };   
         break;
         case 'northwest':
-            console.log('northwest detected');
             return_position = {
                 x: detect_collision ? position.x+6 : position.x-displacement,
                 y: detect_collision ? position.y+6 : position.y-displacement
