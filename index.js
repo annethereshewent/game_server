@@ -82,33 +82,35 @@ io.on('connection', (socket) => {
     })
 
     socket.on('move-link', (data) => {
-        if (data.charging_sword != undefined) {
-            players[data.player].charging_sword = data.charging_sword;
-        }
-
-        if (players[data.player]) {
-            if (data.direction == players[data.player].direction) {
-                players[data.player].status++;
-                players[data.player].status = players[data.player].status % 6;
-
-                //detect a collision and get new position for player
-                detect_player_collision(data.player, data.direction);
-            }
-            else {
-                delete players[data.player].collision
-                //change the character orientation only
-                console.log('changing orientation only');
-                players[data.player].status = 3;
-                players[data.player].direction = data.direction;
-            }
-
-
+        
+        if (!data.use_sword) {
             if (players[data.player]) {
-                //if the player is still alive and no collisions occured then emit new position
+                if (data.charging_sword != undefined) {
+                    players[data.player].charging_sword = data.charging_sword;
+                }
+                if (data.direction == players[data.player].direction) {
+                    players[data.player].status++;
+                    players[data.player].status = players[data.player].status % 6;
 
-                //change the direction of link to one of the four directions if it's a diagonal. we can just check if the prefix is "north" or "south"
+                    //detect a collision and get new position for player
+                    detect_player_collision(data.player, data.direction);
+                }
+                else {
+                    delete players[data.player].collision
+                    //change the character orientation only
+                    console.log('changing orientation only');
+                    players[data.player].status = 3;
+                    players[data.player].direction = data.direction;
+                }
 
-                io.emit('position', players[data.player]);
+
+                if (players[data.player]) {
+                    //if the player is still alive and no collisions occured then emit new position
+
+                    //change the direction of link to one of the four directions if it's a diagonal. we can just check if the prefix is "north" or "south"
+
+                    io.emit('position', players[data.player]);
+                }
             }
         }
     })
