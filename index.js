@@ -1,3 +1,4 @@
+'use strict';
 const express = require('express'),
     app = express(),
     server = require('http').createServer(app),
@@ -14,6 +15,7 @@ app.use(cors());
 
 var link_direction = 'up';
 var players = {};
+var using_sword = {};
 
 
 io.on('connection', (socket) => {
@@ -76,20 +78,20 @@ io.on('connection', (socket) => {
     socket.on('use-sword', (player) => {
         //detect a collision, see if you hit anybody, if so, emit a collision to that person
         if (players[player]) {
-            players[player].use_sword = true;
+            using_sword[player] = true;
             detect_sword_collision(player);
             socket.broadcast.emit('use-sword', player)
         }
     })
 
     socket.on('stop-sword', (player) => {
-        if (players[player]) {
-            delete players[player].use_sword
+        if (using_sword[player]) {
+           delete using_sword[player];
         }
     })
 
     socket.on('move-link', (data) => {     
-        if (!data.use_sword || !players[data.player].use_sword) {
+        if (!data.use_sword && !using_sword[data.player]) {
             if (players[data.player]) {
                 if (data.charging_sword != undefined) {
                     players[data.player].charging_sword = data.charging_sword;
