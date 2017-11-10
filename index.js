@@ -16,9 +16,84 @@ app.use(cors());
 var link_direction = 'up';
 var players = {};
 var using_sword = {};
+const map_objects = [
+    {
+        type: 'wall',
+        sprite: 'green_tree',
+        x: 300,
+        y: 400,
+        width: 64,
+        height: 80
+    },
+    {
+        type: 'wall',
+        sprite: 'green_tree',
+        x: 395,
+        y: 97,
+        repeat_x:2,
+        repeat_y:2,
+        width:64,
+        height:80
+    },
+    {
+        type: 'cliff',
+        sprite: 'cliff_front',
+        repeat_x: 5,
+        x: 84,
+        y: 136,
+        width: 18,
+        height: 40
+    },
+    {
+        type: 'cliff',
+        sprite: 'cliff_left',
+        x: 69,
+        y: 131,
+        width:18,
+        height:49
+    },
+    {
+        type: 'cliff',
+        sprite: 'cliff_right',
+        x: 156,
+        y: 131,
+        width: 18,
+        height: 49
+    },
+    {
+        type: 'wall',
+        sprite: 'pink_stump',
+        x:418,
+        y: 8,
+        width:32,
+        height:32,
+        repeat_x: 4
+    }
+
+
+];
+const map_tiles = [
+    {
+        sprite: 'grass1',
+        x: 240,
+        y: 20,
+        repeat_x: 3
+    },
+    {
+        sprite: 'grass1',
+        x: 220,
+        y: 104,
+        repeat_y: 3
+    }
+];
 
 
 io.on('connection', (socket) => {
+    socket.emit('load-map', {
+        map_tiles: map_tiles,
+        map_objects: map_objects
+    });
+
     socket.on('game-start', (user) => {
         console.log('user has connected.');
 
@@ -62,8 +137,6 @@ io.on('connection', (socket) => {
                     var disconnected_user = prop;
                     savePlayerInfo(disconnected_user, () => { 
                         delete players[disconnected_user];
-                        console.log("players after removing disconnected user: ".bold.red);
-                        console.log(players);
                         io.emit('disconnect', disconnected_user);
                     });
                 }
@@ -85,16 +158,14 @@ io.on('connection', (socket) => {
     })
 
     socket.on('stop-sword', (player) => {
-        console.log('received stop-sword event for player ' + player + ", using_sword = " + using_sword[player]);
         if (using_sword[player]) {
-            console.log('deleting using_sword["' + player + '"]')
            delete using_sword[player];
            delete players[player].use_sword
         }
     })
 
-    socket.on('move-link', (data) => {  
-        console.log("data.use_sword = " + data.use_sword + ", using_sword[" + data.player + "] = " + using_sword[data.player])   
+    socket.on('move-link', (data) => {   
+
         if (!data.use_sword && !using_sword[data.player]) {
 
             if (players[data.player]) {
@@ -106,16 +177,18 @@ io.on('connection', (socket) => {
                     players[data.player].status = players[data.player].status % 6;
 
                     //detect a collision and get new position for player
-                    detect_player_collision(data.player, data.direction);
+                    //detect_player_collision(data.player, data.direction);
+                    detect_collisions(data.player, data.direction);
+
                 }
                 else {
                     delete players[data.player].collision
                     //change the character orientation only
-                    console.log('changing direction only');
                     players[data.player].status = 3;
                     players[data.player].direction = data.direction;
                 }
 
+                console.log(players[data.player].position);
 
                 if (players[data.player]) {
                     //if the player is still alive and no collisions occured then emit new position
@@ -129,6 +202,50 @@ io.on('connection', (socket) => {
     })
 })
 
+function detect_collisions(player, direction) {
+    //first detect any object collisions
+    var object_collision = detect_object_collisions(player, direction);
+
+    if (!object_collision) {
+        if (players[player].charging_sword) {
+            detect_sword_collision(player)   
+        }
+        else {
+            detect_player_collision(player, direction);  
+        }
+    }
+
+}
+
+function detect_object_collisions(player, direction) {
+    var position = players[player].position
+    var new_position = get_position(position, direction);
+
+    var collision_detected = false;
+
+    for (var i = 0; i < map_objects.length; i++) { 
+        if (is_object_collision(new_position, map_objects[i], 10)) {
+            collision_detected = true; 
+
+            //change the player status so that it still animates even if character doesn't move
+            players[player].status++;
+            players[player].status = players[player].status % 6;
+            break;
+        }
+    }
+
+    if (!collision_detected) {
+        players[player].position = get_position(players[player].position, direction);
+    }
+
+    return collision_detected;
+}
+
+function is_object_collision(position, map_object, tolerance=5) {
+    var repeat_x = map_object.repeat_x ? map_object.repeat_x : 1;
+    var repeat_y = map_object.repeat_y ? map_object.repeat_y : 1
+    return position.x > map_object.x-tolerance && position.x < map_object.x+(repeat_x * map_object.width) && position.y > map_object.y-tolerance && position.y < map_object.y+(repeat_y*map_object.height)
+}
 
 function detect_sword_collision(player) {
     var your_position = players[player].position;
@@ -287,8 +404,6 @@ function detect_player_collision(player, direction) {
                     
                     //reset position and health to defaults since person died
                     reset_player_stats(prop);
-
-                    console.log('prop = ' + prop + "(should be groovy-comrade)"); 
 
                     savePlayerInfo(prop, () => { 
                         delete players[prop]
