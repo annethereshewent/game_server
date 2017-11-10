@@ -92,8 +92,10 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('move-link', (data) => {     
+    socket.on('move-link', (data) => {  
+        console.log("data.use_sword = " + data.use_sword + ", using_sword[player] = " + using_sword[data.player])   
         if (!data.use_sword && !using_sword[data.player]) {
+
             if (players[data.player]) {
                 if (data.charging_sword != undefined) {
                     players[data.player].charging_sword = data.charging_sword;
