@@ -5,6 +5,7 @@ const express = require('express'),
     io = require('socket.io').listen(server),
     colors = require('colors'),
     MongoClient = require('mongodb').MongoClient,
+    map = require('./lttp_map'),
     cors = require('cors');
 
 server.listen(process.env.PORT || 3005);
@@ -16,83 +17,10 @@ app.use(cors());
 var link_direction = 'up';
 var players = {};
 var using_sword = {};
-const map_objects = [
-    {
-        type: 'wall',
-        sprite: 'green_tree',
-        x: 300,
-        y: 400,
-        width: 64,
-        height: 80
-    },
-    {
-        type: 'wall',
-        sprite: 'green_tree',
-        x: 395,
-        y: 97,
-        repeat_x:2,
-        repeat_y:2,
-        width:64,
-        height:80
-    },
-    {
-        type: 'cliff',
-        sprite: 'cliff_front',
-        repeat_x: 5,
-        x: 84,
-        y: 136,
-        width: 18,
-        height: 40
-    },
-    {
-        type: 'cliff',
-        sprite: 'cliff_left',
-        x: 69,
-        y: 131,
-        width:18,
-        height:49
-    },
-    {
-        type: 'cliff',
-        sprite: 'cliff_right',
-        x: 156,
-        y: 131,
-        width: 18,
-        height: 49
-    },
-    {
-        type: 'wall',
-        sprite: 'pink_stump',
-        x:418,
-        y: 8,
-        width:32,
-        height:32,
-        repeat_x: 4
-    }
-
-
-];
-const map_tiles = [
-    {
-        sprite: 'grass1',
-        x: 240,
-        y: 20,
-        repeat_x: 3
-    },
-    {
-        sprite: 'grass1',
-        x: 220,
-        y: 104,
-        repeat_y: 3
-    }
-];
 
 
 io.on('connection', (socket) => {
-    socket.emit('load-map', {
-        map_tiles: map_tiles,
-        map_objects: map_objects
-    });
+    socket.emit('load-map', map);
 
     socket.on('game-start', (user) => {
         console.log('user has connected.');
