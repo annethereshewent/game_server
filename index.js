@@ -5,7 +5,7 @@ const express = require('express'),
     io = require('socket.io').listen(server),
     colors = require('colors'),
     MongoClient = require('mongodb').MongoClient,
-    map = require('./lttp_map'),
+    map = require('./lttp_map3'),
     cors = require('cors');
 
 server.listen(process.env.PORT || 3005);
@@ -146,21 +146,61 @@ function detect_collisions(player, direction) {
 }
 
 function detect_object_collisions(player, direction) {
-    var position = players[player].position
+
+    // // for (var i = 0; i < map_objects.length; i++) { 
+    // //     if (is_object_collision(new_position, map_objects[i], 10)) {
+    // //         collision_detected = true; 
+
+    // //         //change the player status so that it still animates even if character doesn't move
+    // //         players[player].status++;
+    // //         players[player].status = players[player].status % 6;
+    // //         break;
+    // //     }
+    // // }
+
+    // if (!collision_detected) {
+    //     players[player].position = get_position(players[player].position, direction);
+    // }
+
+    // return collision_detected;
+
+    var position = players[player].position;
     var new_position = get_position(position, direction);
 
     var collision_detected = false;
 
-    for (var i = 0; i < map_objects.length; i++) { 
-        if (is_object_collision(new_position, map_objects[i], 10)) {
-            collision_detected = true; 
+    map.layers.forEach((layer) => {
+        if (['object', 'entity'].includes(layer.type)) {
+            for (var i = 0; i < layer.data.length; i++) {
+                var tile = layer.data[i];
+                if (tile == 0) {
+                    continue;
+                }
 
-            //change the player status so that it still animates even if character doesn't move
-            players[player].status++;
-            players[player].status = players[player].status % 6;
-            break;
+                var tile_pos = {
+                    x: i,
+                    y: 0
+                }
+                while (tile_pos.x >= map.width) {
+                    tile_pos.x -= map.width;
+                    tile_pos.y++;
+                }
+
+                tile_pos.x *= 8;
+                tile_pos.y *= 8;
+
+                //finally check if there is a collision
+                if (is_object_collision(new_position, tile_pos, 15)) {
+                    collision_detected = true;
+
+                    players[player].status++;
+                    players[player].status = players[player].status % 6;
+
+                    break;
+                }
+            }
         }
-    }
+    })
 
     if (!collision_detected) {
         players[player].position = get_position(players[player].position, direction);
@@ -169,10 +209,8 @@ function detect_object_collisions(player, direction) {
     return collision_detected;
 }
 
-function is_object_collision(position, map_object, tolerance=5) {
-    var repeat_x = map_object.repeat_x ? map_object.repeat_x : 1;
-    var repeat_y = map_object.repeat_y ? map_object.repeat_y : 1
-    return position.x > map_object.x-tolerance && position.x < map_object.x+(repeat_x * map_object.width) && position.y > map_object.y-tolerance && position.y < map_object.y+(repeat_y*map_object.height)
+function is_object_collision(your_pos, object_pos, tolerance=5) {
+    return your_pos.x >= object_pos.x-tolerance && your_pos.x <= object_pos.x+8 && your_pos.y >= object_pos.y-tolerance && your_pos.y <= object_pos.y+8
 }
 
 function detect_sword_collision(player) {
