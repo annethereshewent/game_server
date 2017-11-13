@@ -289,11 +289,6 @@ function savePlayerInfo(player, callback) {
 }
 
 function updatePlayer(db, player, callback) {
-    players[player].position = {
-        x: 496,
-        y: 24
-    }
-    
     db.collection('players').update({
         player: player
     }, 
