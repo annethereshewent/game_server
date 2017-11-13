@@ -23,12 +23,12 @@
         {
          "firstgid":1,
          "id":"light_world_entities",
-         "tiles_per_row": 40
+         "columns": 40
         }, 
         {
          "firstgid":1761,
          "id":"light_world_tiles",
-         "tiles_per_row": 96
+         "columns": 96
         }],
  "tilewidth":8,
  "tileheight":8,

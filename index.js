@@ -5,7 +5,7 @@ const express = require('express'),
     io = require('socket.io').listen(server),
     colors = require('colors'),
     MongoClient = require('mongodb').MongoClient,
-    map = require('./lttp_map3'),
+    map = require('./lttp_map'),
     cors = require('cors');
 
 server.listen(process.env.PORT || 3005);
@@ -36,8 +36,8 @@ io.on('connection', (socket) => {
                 var player = {
                     player: user,
                     position: {
-                        x: 11,
-                        y: 11
+                        x: 496,
+                        y: 24
                     },
                     status: 5,
                     direction: 'up',
@@ -289,6 +289,11 @@ function savePlayerInfo(player, callback) {
 }
 
 function updatePlayer(db, player, callback) {
+    players[player].position = {
+        x: 496,
+        y: 24
+    }
+    
     db.collection('players').update({
         player: player
     }, 
@@ -416,8 +421,8 @@ function detect_player_collision(player, direction) {
 function reset_player_stats(player) {
     //reset position and health to defaults since person died
     players[player].health = players[player].max_health;
-    players[player].position.x = 100;
-    players[player].position.y = 100;
+    players[player].position.x = 496;
+    players[player].position.y = 24;
     delete players[player].collision;
 }
 
