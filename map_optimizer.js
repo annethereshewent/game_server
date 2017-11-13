@@ -6,10 +6,6 @@ const fs = require('fs')
 
 var json_map_file = process.argv[2];
 
-console.log(typeof json_map_file)
-
-console.log(json_map_file);
-
 var map = require(json_map_file);
 
 //all we're doing is converting the data array into a 2d array and removing any 0s that we find. so each element in the 2d array will look like this
@@ -24,28 +20,35 @@ var map = require(json_map_file);
 
 var new_map = Object.assign({}, map);
 
-
-
 var index = 0;
 
 map.layers.forEach((layer, layer_index) => {
     var current_data = [];
-    console.log(layer.data);
     for (var i = 0; i < layer.data.length; i++) {
         var tile = layer.data[i];
         if (tile == 0) {
             continue;
         }
 
+        var tileset_index = getTilesetIndex(tile);
+
+        var current_tile = tile-map.tilesets[tileset_index].firstgid;
+
+        var sprite_y = Math.floor(current_tile / map.tilesets[tileset_index].columns);
+        var sprite_x = current_tile - (sprite_y * map.tilesets[tileset_index].columns);
+
+        var canvas_y = Math.floor()
+
         var y = Math.floor(i / map.width);
         var x = i - (y * map.width);
 
-        console.log("layer_index = " + layer_index);
-
         current_data.push({
             tile: tile, 
-            x: x*8,
-            y: y*8
+            canvas_x: x*8,
+            canvas_y: y*8,
+            sprite_x: sprite_x*8,
+            sprite_y: sprite_y*8,
+            tileset: tileset_index
         });
 
         index++;   
@@ -62,4 +65,17 @@ fs.writeFile(new_filename, JSON.stringify(new_map), (err) => {
     }
 
     console.log('map file converted successfully');
-})
+});
+
+
+
+function getTilesetIndex(tile) {
+    for (var i = map.tilesets.length-1; i >= 0; i--) {
+        if (tile >=  map.tilesets[i].firstgid) {
+            return i;
+        }
+        if (i == 0) {
+            return 0;
+        }
+    }
+}
