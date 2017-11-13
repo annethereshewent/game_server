@@ -76,6 +76,18 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('stop-charging', player)
     });
 
+    socket.on('player-message', (data) => {
+        var timestamp = new Date();   
+
+
+        var timestamp_str = "[" + timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds() + "]"
+        var message =  timestamp_str + " " + data.player + ": " + data.message;
+
+        data.message = message;
+        
+        io.emit('player-message', data);
+    })
+
     socket.on('use-sword', (player) => {
         //detect a collision, see if you hit anybody, if so, emit a collision to that person
         if (players[player]) {
@@ -462,5 +474,3 @@ function get_position(position, direction, detect_collision = false, is_opponent
 
     return return_position;
 }
-
-
