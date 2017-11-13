@@ -5,7 +5,7 @@ const express = require('express'),
     io = require('socket.io').listen(server),
     colors = require('colors'),
     MongoClient = require('mongodb').MongoClient,
-    map = require('./lttp_map'),
+    map = require('./maps/lttp_map'),
     cors = require('cors');
 
 server.listen(process.env.PORT || 3005);
@@ -177,6 +177,8 @@ function detect_object_collisions(player, direction) {
                     continue;
                 }
 
+
+                //CHANGE THIS TO MATCH CLIENT. MUCH BETTER THAN USING WHILE
                 var tile_pos = {
                     x: i,
                     y: 0
