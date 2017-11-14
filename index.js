@@ -80,10 +80,9 @@ io.on('connection', (socket) => {
         var timestamp = new Date();   
 
 
-        var timestamp_str = "[" + timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds() + "]"
-        var message =  timestamp_str + " " + data.player + ": " + data.message;
+        var timestamp_str = "[" + timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds() + "] " + data.player + ": ";
 
-        data.message = message;
+        data.timestamp_str = timestamp_str;
         
         io.emit('player-message', data);
     })
@@ -194,7 +193,7 @@ function detect_object_collisions(player, direction) {
 }
 
 function is_object_collision(your_pos, object_pos, tolerance=5) {
-    return your_pos.x >= object_pos.x-tolerance && your_pos.x <= object_pos.x+8 && your_pos.y >= object_pos.y-tolerance && your_pos.y <= object_pos.y+8
+    return your_pos.x > object_pos.x-tolerance && your_pos.x < object_pos.x+8 && your_pos.y > object_pos.y-tolerance && your_pos.y < object_pos.y+8
 }
 
 function detect_sword_collision(player) {
