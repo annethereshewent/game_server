@@ -1,16 +1,112 @@
 'use strict';
-const express = require('express'),
+const 
+    express = require('express'),
     app = express(),
     server = require('http').createServer(app),
     io = require('socket.io').listen(server),
+    bodyParser = require('body-parser'),
     colors = require('colors'),
     MongoClient = require('mongodb').MongoClient,
     map = require('./maps/lttp_map_optimized'),
+    session = require('express-session'),
+    ejs = require('ejs'),
+    passwordHash = require('password-hash'),
+    config = require('./config/app_' + process.env.NODE_ENV),
     cors = require('cors');
 
 server.listen(process.env.PORT || 3005);
 
 app.use(cors());
+
+app.set('view engine', 'ejs');
+
+app.use(express.static('public'));
+
+app.use(bodyParser.urlencoded({limit: '25mb', extended: true}));
+app.use(bodyParser.json({limit: '25mb', extended: true}));
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: true,
+    saveUninitialized: false
+}));
+
+app.get('/', (req, res) => {
+    res.render('play_game', {
+        username: req.session.username ? req.session.username : '',
+        game_server: config['game_server']
+    });
+});
+app.get('/login', (req, res) => {
+    res.render('login');
+})
+
+app.post('/login', (req, res) => {
+    console.log(req.body);
+    if (req.body.username && req.body.password) {
+        //check the database to see if this user exists
+        find_player(req.body.username, (player) => {
+            if (player) {
+                if (passwordHash.verify(req.body.password, player.password)) {
+                    req.session.username = req.body.username;
+                    res.redirect('/');
+                }
+                else {
+                   res.redirect('/login?error=passwords do not match');
+                }
+            }
+            else {
+                res.redirect('/login?error=user not found');
+            }
+        })
+
+    }
+    else {
+        res.render('login', {
+            notice: "Username not found"
+        });
+    }
+})
+
+app.post('/register', (req, res) => {
+    var notices = [];
+
+    console.log(req.body);
+
+    if (req.body.username && req.body.password && req.body.password2) {
+        find_player(req.body.regiser_username, (player) => {
+            if (!player) {
+                if (req.body.password != req.body.regiseter_password2) {
+                    notices.push('Passwords do not match');
+                }
+            }
+            else {
+                notices.push('Username already exists');
+            }
+        })
+    }
+    else {
+        notices.push('An error has occurred.');
+    }
+
+    if (!notices.length) {
+        register_player(req.body, (data, is_err) => {
+            if (is_err) {
+                console.log("an error has occurred: " + data);
+            }
+            else {
+                req.session.username = req.body.username;
+                res.redirect('/');
+            }
+
+        });
+    }
+    else {
+        res.render('login', {
+            notices: notices
+        })
+    }
+})
 
 
 
@@ -32,6 +128,12 @@ io.on('connection', (socket) => {
                 players[user].socket_id = socket.id;
             }
             else {
+                console.log("An error has occurred, player not found");
+
+                return false;
+            }
+            
+            if (!players[user].position && !players[user].direction && !players[user].health) {
                 //use the default player settings, this is a new player
                 var player = {
                     player: user,
@@ -46,7 +148,11 @@ io.on('connection', (socket) => {
                     socket_id: socket.id   
                 }
 
-                players[user] = player;
+                players[user].position = {x: 496, y: 24};
+                players[user].status = 5
+                players[user].direction = 'up';
+                players[user].health = 3;
+                players[user].max_health = 3;            
             }
             console.log('emitting players to the user: '.bold.magenta);
             console.log(players);
@@ -261,10 +367,7 @@ function savePlayerInfo(player, callback) {
                     });
                 }
                 else {
-                    insertPlayer(db, player, (results) => {
-                        //console.log(results);
-                        callback();
-                    });
+                    console.log("An error has occurred, couldn't update player info.");
                 }
             })
         })
@@ -294,16 +397,16 @@ function updatePlayer(db, player, callback) {
     });
 }
 
-function insertPlayer(db, player, callback) {
-    db.collection('players').insert(players[player], (err, results) => {
-        if (err) {
-            callback(err);
-        }
-        else {
-            callback(results);
-        }
-    })
-}
+// function insertPlayer(db, player, callback) {
+//     db.collection('players').insert(players[player], (err, results) => {
+//         if (err) {
+//             callback(err);
+//         }
+//         else {
+//             callback(results);
+//         }
+//     })
+// }
 
 function connect_db(callback) {
     var uri = process.env.NODE_ENV == 'production' ? process.env.MONGODB_URI : process.env.NODE_DATABASE_URL;
@@ -322,7 +425,7 @@ function connect_db(callback) {
 
 function find_player(player, callback) {
     connect_db((db) => {
-        db.collection('players').find({ 'player': player})
+        db.collection('players').find({ player: player})
         .toArray((err, players) => {
             callback(players[0]);
         })
@@ -440,7 +543,7 @@ function get_position(position, direction, detect_collision = false, is_opponent
 
             return_position = {
                 x: detect_collision ? position.x-6 : position.x+displacement,
-                y: position.y
+                y: position.y 
             };   
         break;
         case 'northwest':
@@ -473,3 +576,20 @@ function get_position(position, direction, detect_collision = false, is_opponent
 
     return return_position;
 }
+
+
+
+function register_player(data, callback) {
+    connect_db((db) => {
+        db.collection('players').insert({ player: data.username, password: passwordHash.generate(data.password) }, (err, results) => {
+            if (err) {
+                callback(err, true);
+            }
+            else {
+                callback(results, false);
+            }
+        })
+    })
+}
+
+

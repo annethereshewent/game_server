@@ -9,10 +9,14 @@
   "author": "Anne Castrillon",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.18.2",
     "colors": "^1.1.2",
     "cors": "^2.8.4",
+    "ejs": "^2.5.7",
     "express": "^4.16.2",
+    "express-session": "^1.15.6",
     "mongodb": "^2.2.33",
+    "password-hash": "^1.2.2",
     "socket.io": "^2.0.4"
   }
 }

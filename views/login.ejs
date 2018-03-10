@@ -1,0 +1,157 @@
+<head>
+    <style>
+        body {
+            background: green;
+        }
+        .login {
+
+            margin-top: 60px;
+            color: black;
+            font-family: "Helvetica Neue";
+        }
+        h1 {
+            text-align: center;
+            color: silver;
+        }
+        .form-panel {
+            background: #D3D3D3;
+            width: 300px;
+            padding-bottom: 20px;
+            margin: auto;
+            border: 1px solid black;
+            box-shadow: 5px 5px 5px grey;
+            font-size: 12px;
+        }
+        .bar {
+            background: blue;
+            height: 20px;
+            width: 100%;
+            position: relative;
+            bottom: 18px;
+        }
+        .span-login {
+            text-align: center;
+        }
+        .label {
+            display: block;
+        }
+        .form-details {
+            margin-left: 25%;
+        }
+        a {
+            text-decoration: none;
+            font-size:12px;
+            color: #5f9ed1;
+        }
+        .mb20 {
+            margin-bottom: 10px;
+        }
+        .errors {
+            color: red;
+            margin-left:20px;
+        }
+        #register-panel {
+            display: none;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="login">        
+        <h1>Please log in to continue</h1>
+        <div class="form-panel">
+            <div class="bar"><p class="span-login">LOG IN</p></div>
+            <form method="post" action="/login">
+                <div class="form-details" id="login-panel">
+                    <div class="row">
+                        <label class="label">Username:</label>
+                        <input type="text" name="username">
+                    </div>
+                    <div class="row mb20">
+                        <label class="label">Password:</label>
+                        <input type="password" name="password">
+                    </div>
+                    <div class="row mb20">
+                        <button type="submit">LOG IN</button>
+                    </div>
+                    <div class="row">
+                        <a href="javascript:void(0)" onclick="show_register_panel()">Click here to Register an Account</a>
+                    </div>
+                </div>
+            </form>
+            <div class="form-details" id="register-panel">
+                <form method="post" action="/register" id="register-form">
+                    <div class="row">
+                        <label class="label">Username:</label>
+                        <input type="text" name="username" id="username">
+                    </div>
+                    <div class="row">
+                        <label class="label">Password:</label>
+                        <input type="password" name="password" id="password">
+                    </div>
+                    <div class="row mb20">
+                        <label class="label">Repeat Password:</label>
+                        <input type="password" name="password2" id="password2">
+                    </div>
+                    <div class="row mb20">
+                        <button type="button" onclick="validateInput()">REGISTER</button>
+                    </div>
+                    <div class="row">
+                        <a href="javascript:void(0)" onclick="show_login_panel()">Click here to Log in</a>
+                    </div>
+                    <div class="errors">
+                        <% if (this.notices) { %>
+                            <% for (var i = 0; i < this.notices.length; i++) { %>
+                                <%= "<p>" + this.notices[i] + "</p>" %> 
+                            <% } %>
+                        <% } %> 
+                        <p><%= this.error ? this.error : '' %></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="/js/jquery.min.js"></script>
+    <script>
+        function show_register_panel() {
+            $("#login-panel").hide();
+            $('#register-panel').show();
+        }
+
+        function show_login_panel() {
+            $("#login-panel").show();
+            $('#register-panel').hide();  
+        }
+
+        function validateInput() {
+            $(".errors").html("");
+
+            var validated = true;
+            var errors = [];
+
+            if ($("#username").val() == '') {
+                errors.push("Username is required");
+                validated = false;
+            }
+            if ($("#password").val() == '') {
+                errors.push("Password is required");
+                validated = false;
+            }
+            if ($("#password").val() != $("#password2").val()) {
+                errors.push("Passwords do not match");
+                validated = false;
+            }
+
+            for (var i = 0; i < errors.length; i++) {
+                $('.errors').append("<p>" + errors[i] + "</p>");
+            }
+
+
+            if (validated) {
+                $("#register-form").submit();
+            }
+        }
+
+    </script>
+</body>
